@@ -1,8 +1,19 @@
+import numba
 import numpy as np
 import pytest
 
-from omnisolver.pt.algorithm import energy_diff
+from omnisolver.pt.algorithm import accept_solution, energy_diff
 from omnisolver.pt.bqm_tools import adjacency_list_from_couplings
+
+
+@numba.njit
+def _numba_seed(seed):
+    np.random.seed(seed)
+
+
+@numba.njit
+def _numba_random():
+    return np.random.rand()
 
 
 def _energy(h_vec, j_mat, state):
@@ -55,3 +66,33 @@ class TestComputingEnergyDifference:
         assert energy_diff(
             h_vec, j_mat, flipped_state, position, neighbours_count, adjacency_list
         ) == pytest.approx(flipped_energy - initial_energy)
+
+
+class TestMonteCarloMove:
+    def test_solution_with_lower_energy_is_always_accepted(self):
+        _numba_seed(42)
+        # Try several times, we should accept each time (since we shouldn't
+        # really use random numbers to decide it.
+        assert all(accept_solution(4.0, 10.0) for _ in range(100))
+
+    def test_solution_with_worse_energy_is_randomly_accepted_with_correct_probability(
+        self,
+    ):
+        _numba_seed(42)
+        # This is tricky, because we cannot inject random generator (see notes
+        # in docstring). The idea is, that instead we first generate random sample,
+        # and then construct negative and positive case for it.
+        beta = 0.1
+        u = _numba_random()
+
+        # Negative case
+        diff_negative = np.log(u) / beta - 1.0
+
+        # Positive case
+        diff_positive = np.log(u) / beta + 1.0
+
+        _numba_seed(42)
+        assert not accept_solution(diff_negative, beta)
+
+        _numba_seed(42)
+        assert accept_solution(diff_positive, beta)

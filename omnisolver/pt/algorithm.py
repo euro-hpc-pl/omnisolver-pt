@@ -53,3 +53,23 @@ def energy_diff(
         j = adjacency_list[position, i]
         total += state[position] * j_mat[position, j] * state[j]
     return 2 * total
+
+
+@numba.njit(fastmath=True)
+def accept_solution(energy_diff, beta):
+    """Decide if solution with known energy difference should be accepted in MC move.
+
+    Solutions with better energy (energy_diff > 0) are always accepted.
+    Solutions with worse energy are accepted with probability exp(-beta * energy_diff)
+
+
+    .. note::
+        Since numba does not support numpy random number generator objects,
+        this function uses top-level numpy.random.random() function.
+        Should you require seeding of generator, use numpy.random.seed() to do so.
+
+    :param energy_diff: difference between old and proposed energy.
+    :param beta: inverse temperature.
+    :return: boolean indicating whether solution should be accepted.
+    """
+    return energy_diff > 0 or np.random.rand() < np.exp(beta * energy_diff)
