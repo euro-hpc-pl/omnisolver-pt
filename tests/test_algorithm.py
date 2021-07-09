@@ -1,8 +1,10 @@
+import itertools
+
 import numba
 import numpy as np
 import pytest
 
-from omnisolver.pt.algorithm import accept_solution, energy_diff
+from omnisolver.pt.algorithm import accept_solution, energy, energy_diff
 from omnisolver.pt.bqm_tools import adjacency_list_from_couplings
 
 
@@ -26,6 +28,16 @@ def _random_ising(rng, size):
     j_mat += j_mat.T
     j_mat[np.diag_indices(size)] = 0
     return h_vec, j_mat
+
+
+def test_energy_is_computed_correctly_for_dense_instance():
+    h_vec, j_mat = _random_ising(np.random.default_rng(123), 10)
+
+    for configuration in itertools.product((-1, 1), repeat=10):
+        state = np.array(configuration)
+        assert energy(state, h_vec, j_mat) == pytest.approx(
+            _energy(h_vec, j_mat, state)
+        )
 
 
 class TestComputingEnergyDifference:

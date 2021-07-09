@@ -73,3 +73,13 @@ def accept_solution(energy_diff, beta):
     :return: boolean indicating whether solution should be accepted.
     """
     return energy_diff > 0 or np.random.rand() < np.exp(beta * energy_diff)
+
+
+@numba.njit(fastmath=True)
+def energy(state, h_vec, j_mat):
+    total = 0.0
+    for i in range(j_mat.shape[0]):
+        total += state[i] * h_vec[i]
+        for j in range(i + 1, j_mat.shape[1]):
+            total += state[i] * state[j] * j_mat[i, j]
+    return total
