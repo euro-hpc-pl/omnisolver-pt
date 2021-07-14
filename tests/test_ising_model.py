@@ -191,3 +191,12 @@ class TestIsingModel:
     ):
         assert not model_1.is_equal(model_2)
         assert not model_2.is_equal(model_1)
+
+    def test_creating_multiple_models_with_same_dtypes_reuses_existing_class(self):
+        h_vec = np.array([0.2, 1.3, -1.5])
+        j_mat = np.array([[0.0, 2.0, -0.7], [2.0, 0.0, 0.3], [-0.7, 0.3, 0.0]])
+
+        model_1 = ising_model(h_vec, j_mat)
+        model_2 = ising_model(h_vec, j_mat)
+
+        assert type(model_1) == type(model_2)
