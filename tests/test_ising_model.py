@@ -139,3 +139,55 @@ class TestIsingModel:
             model.energy_diff(state, position),
             model.energy(state) - model.energy(flipped_state),
         )
+
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+    def test_models_with_equal_couplings_biases_and_dtypes_are_considered_equal(
+        self, dtype
+    ):
+        h_vec = np.array([-0.25, 1.2], dtype=dtype)
+        j_mat = np.array([[0.0, -0.5], [-0.5, 0.0]], dtype=dtype)
+
+        model_1 = ising_model(h_vec, j_mat)
+        model_2 = ising_model(h_vec, j_mat)
+
+        assert model_1.is_equal(model_2)
+        assert model_2.is_equal(model_1)
+
+    @pytest.mark.parametrize(
+        "model_1, model_2",
+        [
+            # Mismatched biases
+            (
+                ising_model(
+                    np.array([-0.25, 1.2]), np.array([[0.0, -0.5], [-0.5, 0.0]])
+                ),
+                ising_model(
+                    np.array([-0.25, 1.0]), np.array([[0.0, -0.5], [-0.5, 0.0]])
+                ),
+            ),
+            # Mismatched couplings
+            (
+                ising_model(
+                    np.array([-0.25, 1.2]), np.array([[0.0, -0.5], [-0.5, 0.0]])
+                ),
+                ising_model(
+                    np.array([-0.25, 1.2]), np.array([[0.0, -0.3], [-0.3, 0.0]])
+                ),
+            ),
+            # Matching values, different dtypes
+            (
+                ising_model(
+                    np.array([-0.25, 1.2]), np.array([[0.0, -0.5], [-0.5, 0.0]])
+                ),
+                ising_model(
+                    np.array([-0.25, 1.2], dtype=np.float32),
+                    np.array([[0.0, -0.5], [-0.5, 0.0]], dtype=np.float32),
+                ),
+            ),
+        ],
+    )
+    def test_models_are_unequal_if_values_of_coefficients_or_dtypes_differs(
+        self, model_1, model_2
+    ):
+        assert not model_1.is_equal(model_2)
+        assert not model_2.is_equal(model_1)

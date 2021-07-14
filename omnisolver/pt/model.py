@@ -1,4 +1,5 @@
 import numba
+import numpy as np
 
 from omnisolver.pt.bqm_tools import adjacency_list_from_couplings
 
@@ -50,5 +51,10 @@ def ising_model(h_vec, j_mat):
                 j = self.adjacency_list[position, i]
                 total += state[position] * self.j_mat[position, j] * state[j]
             return 2 * total
+
+        def is_equal(self, other):
+            return np.array_equal(self.h_vec, other.h_vec) and np.array_equal(
+                self.j_mat, other.j_mat
+            )
 
     return IsingModel(h_vec, j_mat, adjacency_list, neighbours_count)
