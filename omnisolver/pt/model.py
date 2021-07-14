@@ -44,4 +44,11 @@ def ising_model(h_vec, j_mat):
                     total += state[i] * state[j] * self.j_mat[i, j]
             return total
 
+        def energy_diff(self, state, position):
+            total = self.h_vec[position] * state[position]
+            for i in range(self.neighbours_count[position]):
+                j = self.adjacency_list[position, i]
+                total += state[position] * self.j_mat[position, j] * state[j]
+            return 2 * total
+
     return IsingModel(h_vec, j_mat, adjacency_list, neighbours_count)

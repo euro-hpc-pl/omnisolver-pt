@@ -116,3 +116,25 @@ class TestIsingModel:
         model = ising_model(h_vec, j_mat)
 
         np.testing.assert_almost_equal(model.energy(state), expected_energy)
+
+    @pytest.mark.parametrize(
+        "state, position",
+        [
+            (np.array([s0, s1, s2]), position)
+            for s0, s1, s2 in itertools.product([-1, 1], repeat=3)
+            for position in (0, 1, 2)
+        ],
+    )
+    def test_correctly_computes_energy_difference_obtained_by_flipping_one_spin(
+        self, state, position
+    ):
+        h_vec = np.array([0.2, 1.3, -1.5])
+        j_mat = np.array([[0.0, 2.0, -0.7], [2.0, 0.0, 0.3], [-0.7, 0.3, 0.0]])
+
+        model = ising_model(h_vec, j_mat)
+        flipped_state = state.copy()
+        flipped_state[position] = -flipped_state[position]
+
+        np.testing.assert_almost_equal(
+            model.energy_diff(state, position), model.energy_diff(state, position)
+        )
