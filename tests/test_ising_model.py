@@ -136,5 +136,6 @@ class TestIsingModel:
         flipped_state[position] = -flipped_state[position]
 
         np.testing.assert_almost_equal(
-            model.energy_diff(state, position), model.energy_diff(state, position)
+            model.energy_diff(state, position),
+            model.energy(state) - model.energy(flipped_state),
         )
