@@ -36,3 +36,12 @@ class TestNewReplica:
 
         np.testing.assert_array_equal(replica.best_state_so_far, initial_state)
         assert replica.best_energy_so_far == dtype(-0.5 - 0.25 - 1.0 + 0.3 - 0.2 + 2.5)
+
+    def test_retains_beta_passed_during_initialization(self, dtype):
+        model = self.create_model(dtype)
+        beta = dtype(0.013)
+        initial_state = np.ones(3, dtype=np.int8)
+
+        replica = initialize_replica(model, initial_state, beta)
+
+        assert replica.beta == beta
