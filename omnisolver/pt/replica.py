@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 import numba
+import numpy as np
 
 from .model import IsingModel
 
@@ -14,6 +15,19 @@ class Replica:
 
         self.best_state_so_far = self.current_state.copy()
         self.best_energy_so_far = self.current_energy
+
+    def should_accept_flip(self, energy_diff):
+        return energy_diff > 0 or np.random.rand() < np.exp(self.beta * energy_diff)
+
+    def perform_mc_sweep(self):
+        for i in range(self.model.num_spins):
+            energy_diff = self.model.energy_diff(self.current_state, i)
+            if self.should_accept_flip(energy_diff):
+                self.current_energy -= energy_diff
+                self.current_state[i] = -self.current_state[i]
+                if self.current_energy < self.best_energy_so_far:
+                    self.best_energy_so_far = self.current_energy
+                    self.best_state_so_far = self.current_state.copy()
 
 
 @lru_cache
