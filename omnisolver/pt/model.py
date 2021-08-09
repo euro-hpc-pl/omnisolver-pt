@@ -39,10 +39,10 @@ def _create_ising_model(spec):
 
 
 SPEC = tuple[
-    tuple[Literal["h_vec"], numba.types.abstract.Type],
-    tuple[Literal["j_mat"], numba.types.abstract.Type],
-    tuple[Literal["adjacency_list"], numba.types.abstract.Type],
-    tuple[Literal["neighbours_count"], numba.types.abstract.Type],
+    tuple[Literal["h_vec"], numba.types.Type],
+    tuple[Literal["j_mat"], numba.types.Type],
+    tuple[Literal["adjacency_list"], numba.types.Type],
+    tuple[Literal["neighbours_count"], numba.types.Type],
 ]
 
 _MODEL_CLS_CACHE: dict[SPEC, type] = {}
@@ -65,15 +65,16 @@ def ising_model(h_vec, j_mat):
         )
 
     adjacency_list, neighbours_count = adjacency_list_from_couplings(j_mat)
-    spec = [
+
+    spec: SPEC = (
         ("h_vec", numba.typeof(h_vec)),
         ("j_mat", numba.typeof(j_mat)),
         ("adjacency_list", numba.typeof(adjacency_list)),
         ("neighbours_count", numba.typeof(neighbours_count)),
-    ]
+    )
 
     try:
-        model_cls = _MODEL_CLS_CACHE[tuple(spec)]
+        model_cls = _MODEL_CLS_CACHE[spec]
     except KeyError:
         model_cls = _create_ising_model(spec)
         _MODEL_CLS_CACHE[tuple(spec)] = model_cls
