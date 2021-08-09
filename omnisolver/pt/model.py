@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Literal
 
 import numba
@@ -6,6 +7,7 @@ import numpy as np
 from omnisolver.pt.bqm_tools import adjacency_list_from_couplings
 
 
+@lru_cache
 def _create_ising_model(spec):
     @numba.experimental.jitclass(spec)
     class IsingModel:
@@ -73,10 +75,6 @@ def ising_model(h_vec, j_mat):
         ("neighbours_count", numba.typeof(neighbours_count)),
     )
 
-    try:
-        model_cls = _MODEL_CLS_CACHE[spec]
-    except KeyError:
-        model_cls = _create_ising_model(spec)
-        _MODEL_CLS_CACHE[tuple(spec)] = model_cls
+    model_cls = _create_ising_model(spec)
 
     return model_cls(h_vec, j_mat, adjacency_list, neighbours_count)
