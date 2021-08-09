@@ -200,3 +200,13 @@ class TestIsingModel:
         model_2 = ising_model(h_vec, j_mat)
 
         assert type(model_1) == type(model_2)
+
+    def test_number_of_spins_in_model_is_correctly_inferred_based_on_its_coefficients_shape(
+        self,
+    ):
+        h_vec = np.array([0.2, 1.3, -1.5])
+        j_mat = np.array([[0.0, -2.0, -0.7], [-2.0, 0.0, 0.3], [-0.7, 0.3, 0.0]])
+
+        model = ising_model(h_vec, j_mat)
+
+        assert model.num_spins == 3
