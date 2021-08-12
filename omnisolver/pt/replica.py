@@ -10,7 +10,7 @@ class Replica:
     def __init__(self, model: IsingModel, initial_state, beta):
         self.model = model
         self.beta = beta
-        self.current_state = initial_state
+        self.current_state = initial_state.copy()
         self.current_energy = model.energy(initial_state)
 
         self.best_state_so_far = self.current_state.copy()
