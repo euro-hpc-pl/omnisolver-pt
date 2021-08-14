@@ -15,9 +15,22 @@ from omnisolver.pt.replica import initialize_replica
 
 
 class PTSampler(dimod.Sampler):
+    """Parallel tempering samplers."""
+
     def sample_ising(
         self, h, J, num_replicas, num_pt_steps, num_sweeps, beta_min, beta_max
     ):
+        """Solve given Ising problem.
+
+        :param h: dictionary of biases.
+        :param J: dictionary of couplings.
+        :param num_replicas: number of system replicas.
+        :param num_pt_steps: number of parallel tempering steps.
+        :param num_sweeps: number of Monte Carlo sweeps per parallel tempering step.
+        :param beta_min: inverse temperature of the hottest replica.
+        :param beta_max: inverse temperature of the coldest replica.
+        :returns: single-element sample set with the best solution found.
+        """
         bqm = dimod.BQM.from_ising(h, J, 0)
 
         h_vec, j_mat = vectorize_bqm(bqm)
