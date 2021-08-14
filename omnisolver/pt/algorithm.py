@@ -20,3 +20,15 @@ def should_exchange_states(replica_1: Replica, replica_2: Replica):
         replica_1.beta - replica_2.beta
     )
     return exponent > 0 or np.random.rand() < np.exp(exponent)
+
+
+@numba.njit
+def exchange_states(replica_1, replica_2):
+    replica_1.current_energy, replica_2.current_energy = (
+        replica_2.current_energy,
+        replica_1.current_energy,
+    )
+    replica_1.current_state, replica_2.current_state = (
+        replica_2.current_state,
+        replica_1.current_state,
+    )

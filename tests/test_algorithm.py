@@ -1,6 +1,10 @@
 import numpy as np
 
-from omnisolver.pt.algorithm import perform_monte_carlo_sweeps, should_exchange_states
+from omnisolver.pt.algorithm import (
+    exchange_states,
+    perform_monte_carlo_sweeps,
+    should_exchange_states,
+)
 from omnisolver.pt.model import ising_model
 from omnisolver.pt.replica import initialize_replica
 from omnisolver.pt.testing import numba_rand, numba_seed
@@ -75,3 +79,38 @@ class TestReplicaExchangeCriterion:
         replica_2 = initialize_replica(model, initial_state_2, beta_2)
 
         assert not should_exchange_states(replica_1, replica_2)
+
+
+class TestReplicaExchange:
+    def test_swaps_both_current_energy_and_current_state(self):
+        h_vec = np.array([-1.0, 0.5, -3.0])
+        j_mat = np.array([[0.0, -2.5, 0.3], [-2.5, 0.0, 0.1], [0.3, 0.1, 0.0]])
+        model = ising_model(h_vec, j_mat)
+        initial_state_1 = np.ones(3, dtype=np.int8)
+        initial_state_2 = np.ones(3, dtype=np.int8)
+        energy_1 = model.energy(initial_state_1)
+        energy_2 = model.energy(initial_state_2)
+        replica_1 = initialize_replica(model, initial_state_1, beta=0.01)
+        replica_2 = initialize_replica(model, initial_state_1, beta=0.1)
+
+        exchange_states(replica_1, replica_2)
+
+        np.testing.assert_array_equal(replica_1.current_state, initial_state_2)
+        np.testing.assert_array_equal(replica_2.current_state, initial_state_1)
+
+        assert replica_1.current_energy == energy_2
+        assert replica_2.current_energy == energy_1
+
+    def test_does_not_swap_beta(self):
+        h_vec = np.array([-1.0, 0.5, -3.0])
+        j_mat = np.array([[0.0, -2.5, 0.1], [-2.5, 0.0, 0.2], [0.1, 0.2, 0.0]])
+        model = ising_model(h_vec, j_mat)
+        initial_state = np.ones(3, dtype=np.int8)
+
+        replica_1 = initialize_replica(model, initial_state, beta=0.01)
+        replica_2 = initialize_replica(model, initial_state, beta=0.1)
+
+        exchange_states(replica_1, replica_2)
+
+        assert replica_1.beta == 0.01
+        assert replica_2.beta == 0.1
