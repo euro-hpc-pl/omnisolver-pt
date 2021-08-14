@@ -1,19 +1,9 @@
-import numba
 import numpy as np
 import pytest
 
 from omnisolver.pt.model import ising_model
 from omnisolver.pt.replica import initialize_replica
-
-
-@numba.njit
-def numba_seed(seed):
-    np.random.seed(seed)
-
-
-@numba.njit
-def numba_rand():
-    return np.random.rand()
+from omnisolver.pt.testing import numba_rand, numba_seed
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])

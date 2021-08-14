@@ -1,19 +1,9 @@
-import numba
 import numpy as np
 
 from omnisolver.pt.algorithm import perform_monte_carlo_sweeps, should_exchange_states
 from omnisolver.pt.model import ising_model
 from omnisolver.pt.replica import initialize_replica
-
-
-@numba.njit
-def numba_seed(seed):
-    np.random.seed(seed)
-
-
-@numba.njit
-def numba_rand():
-    return np.random.rand()
+from omnisolver.pt.testing import numba_rand, numba_seed
 
 
 class TestPerformingMonteCarloSweeps:
