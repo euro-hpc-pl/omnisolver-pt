@@ -1,6 +1,4 @@
 """Common testing utilities."""
-from typing import cast
-
 import numba
 import numpy as np
 
@@ -18,4 +16,4 @@ def numba_seed(seed) -> None:
 @numba.njit
 def numba_rand() -> float:
     """Return random number uniformly chosen from [0, 1) using numba's random number generator."""
-    return cast(float, np.random.rand())
+    return np.random.rand()
