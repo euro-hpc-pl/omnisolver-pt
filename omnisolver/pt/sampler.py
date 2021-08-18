@@ -18,7 +18,15 @@ class PTSampler(dimod.Sampler):
     """Parallel tempering samplers."""
 
     def sample_ising(
-        self, h, J, num_replicas, num_pt_steps, num_sweeps, beta_min, beta_max
+        self,
+        h,
+        J,
+        num_replicas=10,
+        num_pt_steps=100,
+        num_sweeps=100,
+        beta_min=0.01,
+        beta_max=1.0,
+        **parameters
     ):
         """Solve given Ising problem.
 
