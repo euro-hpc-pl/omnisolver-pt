@@ -103,7 +103,7 @@ def initialize_replica(model: IsingModel, initial_state, beta) -> Replica:
     state_dtype = numba.types.npytypes.Array(numba.types.int8, 1, "C")
 
     spec = (
-        ("model", numba.typeof(model)),
+        ("model", getattr(model, "_numba_type_", None)),
         ("beta", scalar_dtype),
         ("current_state", state_dtype),
         ("current_energy", scalar_dtype),
