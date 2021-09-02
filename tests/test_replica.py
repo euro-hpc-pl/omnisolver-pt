@@ -26,7 +26,9 @@ class TestNewReplica:
         replica = initialize_replica(model, initial_state, beta)
 
         np.testing.assert_array_equal(replica.current_state, initial_state)
-        assert replica.current_energy == dtype(-0.5 + 0.25 - 1.0 - 0.3 - 0.2 - 2.5)
+        np.testing.assert_almost_equal(
+            replica.current_energy, dtype(-0.5 + 0.25 - 1.0 - 0.3 - 0.2 - 2.5)
+        )
 
     def test_considers_initial_state_and_energy_to_be_best_so_far(self, dtype):
         model = self.create_model(dtype)
@@ -36,7 +38,9 @@ class TestNewReplica:
         replica = initialize_replica(model, initial_state, beta)
 
         np.testing.assert_array_equal(replica.best_state_so_far, initial_state)
-        assert replica.best_energy_so_far == dtype(-0.5 - 0.25 - 1.0 + 0.3 - 0.2 + 2.5)
+        np.testing.assert_almost_equal(
+            replica.best_energy_so_far, dtype(-0.5 - 0.25 - 1.0 + 0.3 - 0.2 + 2.5)
+        )
 
     def test_retains_beta_passed_during_initialization(self, dtype):
         model = self.create_model(dtype)
@@ -105,7 +109,7 @@ class TestMonteCarloSweep:
         j_mat = np.zeros((3, 3), dtype=float)
         model = ising_model(h_vec, j_mat)
         initial_state = np.ones(3, dtype=np.int8)
-        numba_seed(beta)
+        numba_seed(1234)
         replica = initialize_replica(model, initial_state, beta)
 
         assert replica.should_accept_flip(2)
