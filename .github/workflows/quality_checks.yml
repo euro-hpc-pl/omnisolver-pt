@@ -19,7 +19,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[test]
       - name: Run unit tests
-        run: pytest --cov=omnisolver.pt --cov-report=xml
+        run: |
+          pytest --cov=omnisolver.pt --cov-report=xml && \
+          NUMBA_DISABLE_JIT=1 pytest --cov=omnisolver.pt --cov-report=xml
       - name: Report coverage
         uses: codecov/codecov-action@v2
         with:
