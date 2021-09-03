@@ -16,6 +16,12 @@ class TestNewReplica:
             np.array(h_vec_list, dtype=dtype), np.array(j_mat_list, dtype=dtype)
         )
 
+    def test_cannot_be_initialized_when_state_mismatches_model(self, dtype):
+        model = self.create_model(dtype)
+
+        with pytest.raises(ValueError):
+            initialize_replica(model, np.ones(2), 0.1)
+
     def test_retains_initial_state_and_its_energy_as_its_current_state_and_energy(
         self, dtype
     ):
