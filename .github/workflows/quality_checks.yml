@@ -18,11 +18,12 @@ jobs:
         run: |
           which python
           python --version
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools
           python -m pip install .[test]
       - name: Run unit tests
         run: |
           which python
+          tree /opt/hostedtoolcache/Python/3.9.6/x64/lib/python3.9/site-packages/omnisolver
           python -m pytest --cov=omnisolver.pt --cov-report=xml && \
           NUMBA_DISABLE_JIT=1 pytest -m pytest --cov=omnisolver.pt --cov-report=xml
       - name: Report coverage
