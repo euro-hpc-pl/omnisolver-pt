@@ -20,6 +20,7 @@ jobs:
           pip install .[test]
       - name: Run unit tests
         run: |
+          ls -al /home/runner/.local/lib/python3.8/site-packages/omnisolver/pt && \
           pytest --cov=omnisolver.pt --cov-report=xml && \
           NUMBA_DISABLE_JIT=1 pytest --cov=omnisolver.pt --cov-report=xml
       - name: Report coverage
