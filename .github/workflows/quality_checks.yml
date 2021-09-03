@@ -23,6 +23,7 @@ jobs:
       - name: Run unit tests
         run: |
           which python
+          tree .
           tree /opt/hostedtoolcache/Python/3.9.6/x64/lib/python3.9/site-packages/omnisolver
           python -m pytest --cov=omnisolver.pt --cov-report=xml && \
           NUMBA_DISABLE_JIT=1 pytest -m pytest --cov=omnisolver.pt --cov-report=xml
