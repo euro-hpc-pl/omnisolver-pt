@@ -1,0 +1,27 @@
+schema_version: 1
+name: "pt"
+sampler_class: "omnisolver.pt.sampler.PTSampler"
+description: "Parallel tempering sampler"
+
+init_args: []
+sample_args:
+  - name: "num_replicas"
+    help: "number of replicas to simulate (default 10)"
+    type: int
+    default: 10
+  - name: "num_pt_steps"
+    help: "number of parallel tempering steps"
+    type: int
+    default: 100
+  - name: "num_sweeps"
+    help: "number of Monte Carlo sweeps per parallel tempering step"
+    type: int
+    default: 100
+  - name: "beta_min"
+    help: "inverse temperature of the hottest replica"
+    type: float
+    default: 0.01
+  - name: "beta_max"
+    help: "inverse temperature of the coldest replica"
+    type: float
+    default: 1.0
