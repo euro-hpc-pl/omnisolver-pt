@@ -22,3 +22,26 @@ class TestSamplingIsingModel:
 
         bqm = dimod.BQM.from_ising(biases, couplings)
         assert bqm.energy(result.first.sample) == result.first.energy
+
+
+class TestPTSamplerProperties:
+    def test_has_no_instance_properties(self):
+        sampler = PTSampler()
+        assert sampler.properties == {}
+
+    def test_all_parameters_are_listed(self):
+        sampler = PTSampler()
+        assert all(
+            param in sampler.parameters
+            for param in (
+                "num_replicas",
+                "num_pt_steps",
+                "num_sweeps",
+                "beta_min",
+                "beta_max",
+            )
+        )
+
+    def test_all_parameters_are_not_relevant_to_any_property(self):
+        sampler = PTSampler()
+        assert all(value == [] for value in sampler.parameters.values())

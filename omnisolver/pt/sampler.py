@@ -68,8 +68,14 @@ class PTSampler(dimod.Sampler):
 
     @property
     def parameters(self):
-        return []
+        return {
+            "num_replicas": [],
+            "num_pt_steps": [],
+            "num_sweeps": [],
+            "beta_min": [],
+            "beta_max": [],
+        }
 
     @property
     def properties(self):
-        return []
+        return {}
