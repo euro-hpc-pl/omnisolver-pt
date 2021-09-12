@@ -1,7 +1,4 @@
-"""Package with purely random reference sampler.
-
-This also serves as a reference implementation of omnisolver plugins.
-"""
+"""Implementation of parallel tempering plugin for Omnisolver."""
 from omnisolver.plugin import Plugin, plugin_from_specification, plugin_impl
 from pkg_resources import resource_stream
 from yaml import safe_load
