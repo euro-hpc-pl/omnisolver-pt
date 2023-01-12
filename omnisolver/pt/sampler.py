@@ -48,7 +48,7 @@ class PTSampler(dimod.Sampler):
 
         initial_states = np.random.randint(
             0, 2, size=(num_replicas, model.num_spins), dtype=np.int8
-        )
+        ) * 2 - 1
 
         replicas = [
             initialize_replica(model, initial_state, beta)
