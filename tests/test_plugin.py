@@ -1,4 +1,4 @@
-from omnisolver.plugin import Plugin
+from omnisolver.common.plugin import Plugin
 
 from omnisolver.pt import get_plugin
 

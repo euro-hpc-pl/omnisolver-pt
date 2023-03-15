@@ -1,3 +1,4 @@
+import numba
 import numpy as np
 
 from omnisolver.pt.algorithm import (
@@ -17,9 +18,9 @@ class TestPerformingMonteCarloSweeps:
         # improve the solution.
         initial_state = np.ones(3, dtype=np.int8)
 
-        replicas = [
-            initialize_replica(model, initial_state, beta) for beta in np.linspace(0.1, 1.0, 10)
-        ]
+        replicas = numba.typed.List(
+            [initialize_replica(model, initial_state, beta) for beta in np.linspace(0.1, 1.0, 10)]
+        )
 
         perform_monte_carlo_sweeps(replicas, 1)
 
