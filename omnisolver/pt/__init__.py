@@ -1,5 +1,5 @@
 """Implementation of parallel tempering plugin for Omnisolver."""
-from omnisolver.plugin import Plugin, plugin_from_specification, plugin_impl
+from omnisolver.common.plugin import Plugin, plugin_from_specification, plugin_impl
 from pkg_resources import resource_stream
 from yaml import safe_load
 

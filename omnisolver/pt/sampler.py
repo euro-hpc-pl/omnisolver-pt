@@ -2,6 +2,7 @@
 from operator import attrgetter
 
 import dimod
+import numba
 import numpy as np
 
 from omnisolver.pt.algorithm import (
@@ -26,7 +27,7 @@ class PTSampler(dimod.Sampler):
         num_sweeps=100,
         beta_min=0.01,
         beta_max=1.0,
-        **parameters
+        **parameters,
     ):
         """Solve given Ising problem.
 
@@ -46,14 +47,16 @@ class PTSampler(dimod.Sampler):
 
         betas = np.geomspace(beta_min, beta_max)
 
-        initial_states = np.random.randint(
-            0, 2, size=(num_replicas, model.num_spins), dtype=np.int8
-        ) * 2 - 1
+        initial_states = (
+            np.random.randint(0, 2, size=(num_replicas, model.num_spins), dtype=np.int8) * 2 - 1
+        )
 
-        replicas = [
-            initialize_replica(model, initial_state, beta)
-            for initial_state, beta in zip(initial_states, betas)
-        ]
+        replicas = numba.typed.List(
+            [
+                initialize_replica(model, initial_state, beta)
+                for initial_state, beta in zip(initial_states, betas)
+            ]
+        )
 
         for _ in range(num_pt_steps):
             perform_monte_carlo_sweeps(replicas, num_sweeps)

@@ -26,7 +26,7 @@ class Replica:
         :param model: Instance of Ising model this replica uses.
         :param initial_state: initial configuration of the system. It is
          expected that this array has N +/-1 integers, where N is the number of spins in the model.
-        :param beta: inverse temperature used for sampling in this replica.
+        :para ature used for sampling in this replica.
 
         .. note::
            Initializer of Replica does not perform any validation. If you wish to validate the
