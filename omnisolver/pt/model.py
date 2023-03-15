@@ -33,9 +33,7 @@ class IsingModel:
         return self.h_vec.shape[0]
 
     def is_equal(self, other):
-        return np.array_equal(self.h_vec, other.h_vec) and np.array_equal(
-            self.j_mat, other.j_mat
-        )
+        return np.array_equal(self.h_vec, other.h_vec) and np.array_equal(self.j_mat, other.j_mat)
 
 
 @lru_cache
@@ -50,9 +48,7 @@ def ising_model(h_vec, j_mat) -> IsingModel:
             f"dtypes of received arrays: {h_vec.dtype}, {j_mat.dtype}."
         )
     if h_vec.shape != (h_vec.shape[0],):
-        raise ValueError(
-            f"Biases need to be 1D array, passed array of shape {h_vec.shape}"
-        )
+        raise ValueError(f"Biases need to be 1D array, passed array of shape {h_vec.shape}")
     if j_mat.shape != (h_vec.shape[0], h_vec.shape[0]):
         raise ValueError(
             "Couplings need to be a 2D array of shape NxN, where N is the length "

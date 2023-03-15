@@ -1,5 +1,3 @@
-from typing import Sequence
-
 import numba
 import numpy as np
 
@@ -7,7 +5,7 @@ from omnisolver.pt.replica import Replica
 
 
 @numba.njit(parallel=True)
-def perform_monte_carlo_sweeps(replicas: Sequence[Replica], num_sweeps) -> None:
+def perform_monte_carlo_sweeps(replicas: numba.typed.List[Replica], num_sweeps) -> None:
     """Perform given number of Monte Carlo sweeps for each replica.
 
     The operation is parallelized over replicas.

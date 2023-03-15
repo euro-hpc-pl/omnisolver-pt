@@ -1,3 +1,4 @@
+import numba
 import numpy as np
 
 from omnisolver.pt.algorithm import (
@@ -17,16 +18,13 @@ class TestPerformingMonteCarloSweeps:
         # improve the solution.
         initial_state = np.ones(3, dtype=np.int8)
 
-        replicas = [
-            initialize_replica(model, initial_state, beta)
-            for beta in np.linspace(0.1, 1.0, 10)
-        ]
+        replicas = numba.typed.List(
+            [initialize_replica(model, initial_state, beta) for beta in np.linspace(0.1, 1.0, 10)]
+        )
 
         perform_monte_carlo_sweeps(replicas, 1)
 
-        assert all(
-            replica.current_energy < model.energy(initial_state) for replica in replicas
-        )
+        assert all(replica.current_energy < model.energy(initial_state) for replica in replicas)
 
 
 class TestReplicaExchangeCriterion:
@@ -36,9 +34,7 @@ class TestReplicaExchangeCriterion:
         numba_seed(42)
         model = ising_model(np.ones(3), np.zeros((3, 3)))
         replica_1 = initialize_replica(model, np.ones(3, dtype=np.int8), beta=0.1)
-        replica_2 = initialize_replica(
-            model, np.array([-1, 1, -1], dtype=np.int8), beta=0.01
-        )
+        replica_2 = initialize_replica(model, np.array([-1, 1, -1], dtype=np.int8), beta=0.01)
 
         assert should_exchange_states(replica_1, replica_2)
         assert should_exchange_states(replica_2, replica_1)

@@ -12,9 +12,7 @@ class TestNewReplica:
     def create_model(dtype):
         h_vec_list = [0.5, 0.25, -1.0]
         j_mat_list = [[0.0, 0.3, 0.2], [0.3, 0.0, -2.5], [0.2, -2.5, 0.0]]
-        return ising_model(
-            np.array(h_vec_list, dtype=dtype), np.array(j_mat_list, dtype=dtype)
-        )
+        return ising_model(np.array(h_vec_list, dtype=dtype), np.array(j_mat_list, dtype=dtype))
 
     def test_cannot_be_initialized_when_state_mismatches_model(self, dtype):
         model = self.create_model(dtype)
@@ -22,9 +20,7 @@ class TestNewReplica:
         with pytest.raises(ValueError):
             initialize_replica(model, np.ones(2), 0.1)
 
-    def test_retains_initial_state_and_its_energy_as_its_current_state_and_energy(
-        self, dtype
-    ):
+    def test_retains_initial_state_and_its_energy_as_its_current_state_and_energy(self, dtype):
         model = self.create_model(dtype)
         beta = 1.0
         initial_state = np.array([-1, 1, 1], dtype=np.int8)
@@ -104,9 +100,7 @@ class TestMonteCarloSweep:
         for _ in range(10):
             replica.perform_mc_sweep()
 
-        np.testing.assert_almost_equal(
-            model.energy(replica.current_state), replica.current_energy
-        )
+        np.testing.assert_almost_equal(model.energy(replica.current_state), replica.current_energy)
 
     @pytest.mark.parametrize("beta", [10, 1, 0.1])
     @pytest.mark.parametrize("seed", [42, 123, 128])
