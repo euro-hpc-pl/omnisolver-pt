@@ -7,7 +7,7 @@ import numpy as np
 from .model import IsingModel
 
 
-class Replica:
+class BaseReplica:
     """Replica of Ising spin-glass used in parallel tempering algorithm.
 
     :ivar model: Instance of Ising model this replica uses.
@@ -37,9 +37,6 @@ class Replica:
         self.current_state = initial_state.copy()
         self.current_energy = model.energy(initial_state)
 
-        self.best_state_so_far = self.current_state.copy()
-        self.best_energy_so_far = self.current_energy
-
     def should_accept_flip(self, energy_diff: float) -> bool:
         """Determine if this replica should accept spin flip resulting in given energy difference.
 
@@ -66,9 +63,25 @@ class Replica:
             if self.should_accept_flip(energy_diff):
                 self.current_energy -= energy_diff
                 self.current_state[i] = -self.current_state[i]
-                if self.current_energy < self.best_energy_so_far:
-                    self.best_energy_so_far = self.current_energy
-                    self.best_state_so_far = self.current_state.copy()
+                self.update_tracking_info()
+
+    def update_tracking_info(self):
+        pass
+
+
+class Replica(BaseReplica):
+    __init__base = BaseReplica.__init__
+
+    def __init__(self, model: IsingModel, initial_state, beta):
+        self.__init__base(model, initial_state, beta)
+
+        self.best_state_so_far = self.current_state.copy()
+        self.best_energy_so_far = self.current_energy
+
+    def update_tracking_info(self):
+        if self.current_energy < self.best_energy_so_far:
+            self.best_energy_so_far = self.current_energy
+            self.best_state_so_far = self.current_state.copy()
 
 
 @lru_cache
