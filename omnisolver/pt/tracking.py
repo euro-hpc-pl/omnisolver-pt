@@ -1,4 +1,5 @@
 from functools import lru_cache
+from heapq import heappop, heappush
 from typing import Protocol, Sequence, Tuple
 
 import numpy as np
@@ -51,6 +52,20 @@ def _low_energy_spectrum_tracker(energy_dtype):
             energies = [item.energy for item in self.heap]
             states = [item.state for item in self.heap]
             return states, energies
+
+        def store(self, new_state, new_energy):
+            if self._is_already_stored(new_state):
+                return
+            new_item = _HeapItem(new_state, new_energy)
+            heappush(self.heap, new_item)
+            if len(self.heap) > self.num_states:
+                heappop(self.heap)
+
+        def _is_already_stored(self, state):
+            for item in self.heap:
+                if np.array_equal(state, item.state):
+                    return True
+            return False
 
     return _LowEnergySpectrumTracker
 
