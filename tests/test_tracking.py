@@ -12,7 +12,15 @@ def assert_records_agree(tracker, states, energies):
     np.testing.assert_array_equal(recorded_energies, energies)
 
 
-@pytest.mark.parametrize("tracker_cls", [tracker_factory(float32, 1), tracker_factory(float64, 1)])
+@pytest.mark.parametrize(
+    "tracker_cls",
+    [
+        tracker_factory(float32, 1),
+        tracker_factory(float64, 1),
+        tracker_factory(float32, 100),
+        tracker_factory(float64, 100),
+    ],
+)
 class TestTrackersInitialization:
     def test_new_ground_only_tracker_retains_initial_configuration_as_the_best_one(
         self, tracker_cls
