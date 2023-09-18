@@ -38,3 +38,18 @@ class TestGroundOnlyTracker:
         recorded_states, recorded_energies = tracker.records()
         np.testing.assert_array_equal([new_state], recorded_states)
         assert recorded_energies == [new_energy]
+
+    def test_storing_new_configuration_with_higher_energy_leaves_records_untouched(
+        self, tracker_cls
+    ):
+        initial_state = np.array([1, -1, -1, 1, 1], dtype=np.int8)
+        initial_energy = 2.5
+        new_state = np.array([1, 1, -1, 1, -1], dtype=np.int8)
+        new_energy = 3.0
+        tracker = tracker_cls(initial_state, initial_energy)
+
+        tracker.store(new_state, new_energy)
+
+        recorded_states, recorded_energies = tracker.records()
+        np.testing.assert_array_equal([initial_state], recorded_states)
+        assert recorded_energies == [initial_energy]
