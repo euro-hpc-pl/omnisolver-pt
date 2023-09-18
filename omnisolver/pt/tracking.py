@@ -10,12 +10,14 @@ from ._numba_helpers import numba_type_of_cls
 
 
 class Tracker(Protocol):
-    def records(self) -> Tuple[Sequence[np.ndarray], Sequence[float]]:
+    def records(self) -> Tuple[Sequence[np.ndarray], Sequence[float]]:  # pragma: no cover
         raise NotImplementedError()
 
 
 class TrackerFactory(Protocol):
-    def __call__(self, initial_state: np.ndarray, initial_energy: np.ndarray) -> Tracker:
+    def __call__(
+        self, initial_state: np.ndarray, initial_energy: np.ndarray
+    ) -> Tracker:  # pragma: no cover
         raise NotImplementedError()
 
 
