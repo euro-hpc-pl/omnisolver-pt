@@ -53,3 +53,18 @@ class TestGroundOnlyTracker:
         recorded_states, recorded_energies = tracker.records()
         np.testing.assert_array_equal([initial_state], recorded_states)
         assert recorded_energies == [initial_energy]
+
+    def test_only_single_lowest_energy_state_is_recorded_after_successive_stores(self, tracker_cls):
+        rng = np.random.default_rng(42)
+        energies = rng.integers(0, 10, size=(10)) / 2
+        states = rng.integers(-1, 1, size=(10, 8), dtype=np.int8)
+        idx = np.argmin(energies)
+        best_state, best_energy = states[idx], energies[idx]
+        tracker = tracker_cls(states[0], energies[0])
+
+        for state, energy in zip(states[1:], energies[1:]):
+            tracker.store(state, energy)
+
+        recorded_states, recorded_energies = tracker.records()
+        np.testing.assert_array_equal([best_state], recorded_states)
+        assert recorded_energies == [best_energy]
