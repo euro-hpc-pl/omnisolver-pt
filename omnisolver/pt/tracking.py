@@ -45,18 +45,19 @@ def _low_energy_spectrum_tracker(energy_dtype):
     @jitclass((("heap", List(_HeapItem.class_type.instance_type)), ("num_states", int64)))
     class _LowEnergySpectrumTracker:
         def __init__(self, initial_state, initial_energy, num_states):
-            self.heap = [_HeapItem(initial_state.copy(), initial_energy)]
+            self.heap = [_HeapItem(initial_state.copy(), -initial_energy)]
             self.num_states = num_states
 
         def records(self) -> Tuple[Sequence[np.ndarray], Sequence[float]]:
-            energies = [item.energy for item in self.heap]
-            states = [item.state for item in self.heap]
-            return states, energies
+            energies = np.array([-item.energy for item in self.heap])
+            sorted_indices = np.argsort(energies)
+            states = [self.heap[i].state for i in sorted_indices]
+            return states, [energies[i] for i in sorted_indices]
 
         def store(self, new_state, new_energy):
             if self._is_already_stored(new_state):
                 return
-            new_item = _HeapItem(new_state, new_energy)
+            new_item = _HeapItem(new_state.copy(), -new_energy)
             heappush(self.heap, new_item)
             if len(self.heap) > self.num_states:
                 heappop(self.heap)

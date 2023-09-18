@@ -134,3 +134,70 @@ class TestGroundOnlyTracker:
         _foo(tracker, states, energies)
 
         assert_records_agree(tracker, [expected_state], [best_energy])
+
+
+@pytest.mark.parametrize(
+    "tracker_factory", [tracker_factory(float32, 5), tracker_factory(float64, 5)]
+)
+class TestLowEnergySpectrumTracker:
+    def test_storing_the_same_record_is_idempotent(self, tracker_factory):
+        initial_state = np.array([-1, 1, 1], dtype=np.int8)
+        initial_energy = 0.5
+        tracker = tracker_factory(initial_state, initial_energy)
+
+        tracker.store(initial_state, initial_energy)
+
+        assert_records_agree(tracker, [initial_state], [initial_energy])
+
+    def test_records_returns_best_sorted_states(self, tracker_factory):
+        initial_state = np.array([1, 1, 1], dtype=np.int8)
+        initial_energy = -2.5
+        states = [
+            np.array([-1, 1, 1], dtype=np.int8),
+            np.array([-1, -1, 1], dtype=np.int8),
+            np.array([1, -1, 1], dtype=np.int8),
+            np.array([1, -1, -1], dtype=np.int8),
+            np.array([-1, -1, -1], dtype=np.int8),
+            np.array([-1, 1, -1], dtype=np.int8),
+        ]
+        energies = [-2.0, 2.0, 1.5, -1.0, -0.5, 0.0, 3.0]
+        tracker = tracker_factory(initial_state, initial_energy)
+
+        for state, energy in zip(states, energies):
+            tracker.store(state, energy)
+
+        assert_records_agree(
+            tracker,
+            [initial_state, states[0], states[3], states[4], states[5]],
+            [-2.5, -2.0, -1.0, -0.5, 0.0],
+        )
+
+    def test_stored_states_are_copied_in_python_code(self, tracker_factory):
+        initial_state = np.array([1, 1, 1], dtype=np.int8)
+        initial_energy = -2.5
+        new_state = np.array([1, 1, -1], dtype=np.int8)
+        expected_state = new_state.copy()
+        new_energy = -3.0
+        tracker = tracker_factory(initial_state, initial_energy)
+
+        tracker.store(new_state, new_energy)
+        new_state[0] = -1
+
+        assert_records_agree(tracker, [expected_state, initial_state], [new_energy, initial_energy])
+
+    def test_stored_states_are_copied_in_jit_code(self, tracker_factory):
+        initial_state = np.array([1, 1, 1], dtype=np.int8)
+        initial_energy = -2.5
+        new_state = np.array([1, 1, -1], dtype=np.int8)
+        expected_state = new_state.copy()
+        new_energy = -3.0
+
+        @njit
+        def _foo(tracker, state, energy):
+            tracker.store(state, energy)
+            state[0] = -state[0]
+
+        tracker = tracker_factory(initial_state, initial_energy)
+        _foo(tracker, new_state, new_energy)
+
+        assert_records_agree(tracker, [expected_state, initial_state], [new_energy, initial_energy])
