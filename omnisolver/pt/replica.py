@@ -5,9 +5,10 @@ import numba
 import numpy as np
 
 from .model import IsingModel
+from .tracking import tracker_factory
 
 
-class BaseReplica:
+class Replica:
     """Replica of Ising spin-glass used in parallel tempering algorithm.
 
     :ivar model: Instance of Ising model this replica uses.
@@ -20,7 +21,7 @@ class BaseReplica:
     :ivar best_energy_so_far: energy corresponding to the best state seen by this replica so far.
     """
 
-    def __init__(self, model: IsingModel, initial_state, beta):
+    def __init__(self, model: IsingModel, initial_state, beta, tracker):
         """Create new replica using given model, initial state and inverse temperature.
 
         :param model: Instance of Ising model this replica uses.
@@ -36,6 +37,7 @@ class BaseReplica:
         self.beta = beta
         self.current_state = initial_state.copy()
         self.current_energy = model.energy(initial_state)
+        self.tracker = tracker
 
     def should_accept_flip(self, energy_diff: float) -> bool:
         """Determine if this replica should accept spin flip resulting in given energy difference.
@@ -63,25 +65,7 @@ class BaseReplica:
             if self.should_accept_flip(energy_diff):
                 self.current_energy -= energy_diff
                 self.current_state[i] = -self.current_state[i]
-                self.update_tracking_info()
-
-    def update_tracking_info(self):
-        pass
-
-
-class Replica(BaseReplica):
-    __init__base = BaseReplica.__init__
-
-    def __init__(self, model: IsingModel, initial_state, beta):
-        self.__init__base(model, initial_state, beta)
-
-        self.best_state_so_far = self.current_state.copy()
-        self.best_energy_so_far = self.current_energy
-
-    def update_tracking_info(self):
-        if self.current_energy < self.best_energy_so_far:
-            self.best_energy_so_far = self.current_energy
-            self.best_state_so_far = self.current_state.copy()
+                self.tracker.store(self.current_state, self.current_energy)
 
 
 @lru_cache
@@ -89,7 +73,7 @@ def _create_replica_cls(spec):
     return numba.experimental.jitclass(spec)(Replica)
 
 
-def initialize_replica(model: IsingModel, initial_state, beta) -> Replica:
+def initialize_replica(model: IsingModel, initial_state, beta, num_states) -> Replica:
     """Initialize an instance of jit-compiled Replica class.
 
     :param model: Ising model used by the replica.
@@ -115,6 +99,8 @@ def initialize_replica(model: IsingModel, initial_state, beta) -> Replica:
     scalar_dtype = numba.typeof(model.h_vec).dtype
     state_dtype = numba.types.npytypes.Array(numba.types.int8, 1, "C")
 
+    tracker = tracker_factory(scalar_dtype, num_states)(initial_state, model.energy(initial_state))
+
     spec = (
         ("model", getattr(model, "_numba_type_", None)),
         ("beta", scalar_dtype),
@@ -122,8 +108,9 @@ def initialize_replica(model: IsingModel, initial_state, beta) -> Replica:
         ("current_energy", scalar_dtype),
         ("best_state_so_far", state_dtype),
         ("best_energy_so_far", scalar_dtype),
+        ("tracker", numba.typeof(tracker).class_type.instance_type),
     )
 
     replica_cls = _create_replica_cls(spec)
 
-    return replica_cls(model, initial_state, beta)
+    return replica_cls(model, initial_state, beta, tracker)

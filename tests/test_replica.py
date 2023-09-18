@@ -18,14 +18,14 @@ class TestNewReplica:
         model = self.create_model(dtype)
 
         with pytest.raises(ValueError):
-            initialize_replica(model, np.ones(2), 0.1)
+            initialize_replica(model, np.ones(2), 0.1, 1)
 
     def test_retains_initial_state_and_its_energy_as_its_current_state_and_energy(self, dtype):
         model = self.create_model(dtype)
         beta = 1.0
         initial_state = np.array([-1, 1, 1], dtype=np.int8)
 
-        replica = initialize_replica(model, initial_state, beta)
+        replica = initialize_replica(model, initial_state, beta, 1)
 
         np.testing.assert_array_equal(replica.current_state, initial_state)
         np.testing.assert_almost_equal(
@@ -37,19 +37,19 @@ class TestNewReplica:
         beta = 0.1
         initial_state = np.array([-1, -1, 1], dtype=np.int8)
 
-        replica = initialize_replica(model, initial_state, beta)
+        replica = initialize_replica(model, initial_state, beta, 1)
 
-        np.testing.assert_array_equal(replica.best_state_so_far, initial_state)
-        np.testing.assert_almost_equal(
-            replica.best_energy_so_far, dtype(-0.5 - 0.25 - 1.0 + 0.3 - 0.2 + 2.5)
-        )
+        states, energies = replica.tracker.records()
+
+        np.testing.assert_array_equal(states[0], initial_state)
+        np.testing.assert_almost_equal(energies[0], dtype(-0.5 - 0.25 - 1.0 + 0.3 - 0.2 + 2.5))
 
     def test_retains_beta_passed_during_initialization(self, dtype):
         model = self.create_model(dtype)
         beta = dtype(0.013)
         initial_state = np.ones(3, dtype=np.int8)
 
-        replica = initialize_replica(model, initial_state, beta)
+        replica = initialize_replica(model, initial_state, beta, 1)
 
         assert replica.beta == beta
 
@@ -64,7 +64,7 @@ class TestMonteCarloSweep:
     )
     def test_does_not_disturb_beta_or_the_model(self, model, beta):
         initial_state = np.array([-1, 1], dtype=np.int8)
-        replica = initialize_replica(model, initial_state, beta)
+        replica = initialize_replica(model, initial_state, beta, 1)
 
         replica.perform_mc_sweep()
 
@@ -80,14 +80,14 @@ class TestMonteCarloSweep:
         initial_state = np.array([-1, 1, -1], dtype=np.int8)
         initial_energy = model.energy(initial_state)
         numba_seed(1234)
-        replica = initialize_replica(model, initial_state, 0.01)
+        replica = initialize_replica(model, initial_state, 0.01, 1)
 
         replica.perform_mc_sweep()
 
-        assert replica.best_energy_so_far <= initial_energy
-        np.testing.assert_almost_equal(
-            model.energy(replica.best_state_so_far), replica.best_energy_so_far
-        )
+        states, energies = replica.tracker.records()
+
+        assert energies[0] <= initial_energy
+        np.testing.assert_almost_equal(model.energy(states[0]), energies[0])
 
     def test_maintains_consistency_between_current_solution_and_current_energy(self):
         h_vec = np.array([0.5, -0.25, 0.75])
@@ -95,7 +95,7 @@ class TestMonteCarloSweep:
         model = ising_model(h_vec, j_mat)
         initial_state = np.array([1, 1, 1], dtype=np.int8)
         numba_seed(42)
-        replica = initialize_replica(model, initial_state, 0.0001)
+        replica = initialize_replica(model, initial_state, 0.0001, 1)
 
         for _ in range(10):
             replica.perform_mc_sweep()
@@ -110,7 +110,7 @@ class TestMonteCarloSweep:
         model = ising_model(h_vec, j_mat)
         initial_state = np.ones(3, dtype=np.int8)
         numba_seed(1234)
-        replica = initialize_replica(model, initial_state, beta)
+        replica = initialize_replica(model, initial_state, beta, 1)
 
         assert replica.should_accept_flip(2)
 
@@ -125,7 +125,7 @@ class TestMonteCarloSweep:
         numba_seed(42)
         threshold_beta = np.log(numba_rand()) / -1.5
         numba_seed(42)  # reseed so we get the same sample
-        replica = initialize_replica(model, initial_state, threshold_beta - 0.0001)
+        replica = initialize_replica(model, initial_state, threshold_beta - 0.0001, 1)
 
         assert replica.should_accept_flip(-1.5)
 
@@ -137,6 +137,6 @@ class TestMonteCarloSweep:
         numba_seed(1234)
         threshold_beta = np.log(numba_rand()) / -1.5
         numba_seed(1234)
-        replica = initialize_replica(model, initial_state, threshold_beta + 0.01)
+        replica = initialize_replica(model, initial_state, threshold_beta + 0.01, 1)
 
         assert not replica.should_accept_flip(-1.5)
