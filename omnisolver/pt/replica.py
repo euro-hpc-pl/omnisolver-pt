@@ -4,6 +4,7 @@ from functools import lru_cache
 import numba
 import numpy as np
 
+from ._numba_helpers import numba_type_of_instance
 from .model import IsingModel
 from .tracking import tracker_factory
 
@@ -108,7 +109,7 @@ def initialize_replica(model: IsingModel, initial_state, beta, num_states) -> Re
         ("current_energy", scalar_dtype),
         ("best_state_so_far", state_dtype),
         ("best_energy_so_far", scalar_dtype),
-        ("tracker", numba.typeof(tracker).class_type.instance_type),
+        ("tracker", numba_type_of_instance(tracker)),
     )
 
     replica_cls = _create_replica_cls(spec)

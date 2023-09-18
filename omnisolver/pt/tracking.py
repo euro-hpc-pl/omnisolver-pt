@@ -6,6 +6,8 @@ import numpy as np
 from numba.experimental import jitclass
 from numba.types import List, int8, int64
 
+from ._numba_helpers import numba_type_of_cls
+
 
 class Tracker(Protocol):
     def records(self) -> Tuple[Sequence[np.ndarray], Sequence[float]]:
@@ -42,7 +44,7 @@ def _low_energy_spectrum_tracker(energy_dtype):
         def __lt__(self, other):
             return self.energy < other.energy
 
-    @jitclass((("heap", List(_HeapItem.class_type.instance_type)), ("num_states", int64)))
+    @jitclass((("heap", List(numba_type_of_cls(_HeapItem))), ("num_states", int64)))
     class _LowEnergySpectrumTracker:
         def __init__(self, initial_state, initial_energy, num_states):
             self.heap = [_HeapItem(initial_state.copy(), -initial_energy)]

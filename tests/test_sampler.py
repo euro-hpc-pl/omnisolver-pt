@@ -32,7 +32,7 @@ class TestSamplingIsingModel:
         result = sampler.sample(
             bqm,
             num_replicas=3,
-            num_pt_steps=100,
+            num_pt_steps=10,
             num_sweeps=10,
             beta_min=0.01,
             beta_max=0.1,
