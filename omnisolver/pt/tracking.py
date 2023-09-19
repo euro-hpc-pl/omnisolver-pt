@@ -8,9 +8,14 @@ from numba.types import List, int8, int64
 
 from ._numba_helpers import numba_type_of_cls
 
+Records = Tuple[Sequence[np.ndarray], Sequence[float]]
+
 
 class Tracker(Protocol):
-    def records(self) -> Tuple[Sequence[np.ndarray], Sequence[float]]:  # pragma: no cover
+    def records(self) -> Records:  # pragma: no cover
+        raise NotImplementedError()
+
+    def store(self, new_state: np.ndarray, new_energy: float):  # pragma: no cover
         raise NotImplementedError()
 
 
@@ -26,7 +31,7 @@ class _GroundOnlyTracker:
         self.best_state_so_far = initial_state.copy()
         self.best_energy_so_far = initial_energy
 
-    def records(self):
+    def records(self) -> Records:
         return [self.best_state_so_far], [self.best_energy_so_far]
 
     def store(self, new_state, new_energy):

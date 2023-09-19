@@ -1,12 +1,13 @@
 """Implementation of replica used in parallel tempering."""
 from functools import lru_cache
+from typing import Type
 
 import numba
 import numpy as np
 
 from ._numba_helpers import numba_type_of_instance
 from .model import IsingModel
-from .tracking import tracker_factory
+from .tracking import Tracker, tracker_factory
 
 
 class Replica:
@@ -22,7 +23,7 @@ class Replica:
     :ivar best_energy_so_far: energy corresponding to the best state seen by this replica so far.
     """
 
-    def __init__(self, model: IsingModel, initial_state, beta, tracker):
+    def __init__(self, model: IsingModel, initial_state: np.ndarray, beta: float, tracker: Tracker):
         """Create new replica using given model, initial state and inverse temperature.
 
         :param model: Instance of Ising model this replica uses.
@@ -70,7 +71,7 @@ class Replica:
 
 
 @lru_cache
-def _create_replica_cls(spec):
+def _create_replica_cls(spec) -> Type[Replica]:
     return numba.experimental.jitclass(spec)(Replica)
 
 
@@ -98,17 +99,15 @@ def initialize_replica(model: IsingModel, initial_state, beta, num_states) -> Re
         )
 
     scalar_dtype = numba.typeof(model.h_vec).dtype
-    state_dtype = numba.types.npytypes.Array(numba.types.int8, 1, "C")
+    state_dtype = numba.types.int8[:]
 
     tracker = tracker_factory(scalar_dtype, num_states)(initial_state, model.energy(initial_state))
 
     spec = (
-        ("model", getattr(model, "_numba_type_", None)),
+        ("model", numba_type_of_instance(model)),
         ("beta", scalar_dtype),
         ("current_state", state_dtype),
         ("current_energy", scalar_dtype),
-        ("best_state_so_far", state_dtype),
-        ("best_energy_so_far", scalar_dtype),
         ("tracker", numba_type_of_instance(tracker)),
     )
 
