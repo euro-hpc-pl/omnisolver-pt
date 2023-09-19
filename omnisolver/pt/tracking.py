@@ -12,13 +12,40 @@ Records = Tuple[Sequence[np.ndarray], Sequence[float]]
 
 
 class Tracker(Protocol):
+    """Protocl describing objects tracking states and their configuration.
+
+    The tracker is an object used by Replica to store some states or energies.
+    Thanks to extracting the state/energies storage to another object,
+    we don't need to alter the Replica class to implement different storage
+    strategies.
+
+    :param initial_state: initial_state this tracker starts tracking from.
+    :param initial_energy: the corresponding energy.
+    """
+
     def __init__(self, initial_state: np.ndarray, initial_energy: float):  # pragma: no cover
         raise NotImplementedError()
 
     def records(self) -> Records:  # pragma: no cover
+        """Return configurations stored by this tracker as a pair of sequences.
+
+        :returns: A pair (states, energies) of sequences. The states sequence comprises
+         sstates recorded by this tracker, and the energies sequence comprises
+         corresponding energies.
+        """
         raise NotImplementedError()
 
-    def store(self, new_state: np.ndarray, new_energy: float):  # pragma: no cover
+    def digest(self, new_state: np.ndarray, new_energy: float):  # pragma: no cover
+        """Digest new configuration, storing or discarding it at tracker's discretion.
+
+        Whether the state will be stored or not depends on the tracker and/or
+        its configuration. For instance, trackers recording only a ground state
+        approximation will only store the new state if it has lower energy
+        then the previously stored one.
+
+        :param new_state: new state for tracker to consider.
+        :param new_energy: the corresponding energy.
+        """
         raise NotImplementedError()
 
 
@@ -37,7 +64,7 @@ class _GroundOnlyTracker:
     def records(self) -> Records:
         return [self.best_state_so_far], [self.best_energy_so_far]
 
-    def store(self, new_state, new_energy) -> None:
+    def digest(self, new_state, new_energy) -> None:
         if new_energy < self.best_energy_so_far:
             self.best_energy_so_far = new_energy
             self.best_state_so_far = new_state.copy()
@@ -66,7 +93,7 @@ def _low_energy_spectrum_tracker(energy_dtype):
             states = [self.heap[i].state for i in sorted_indices]
             return states, [energies[i] for i in sorted_indices]
 
-        def store(self, new_state, new_energy):
+        def digest(self, new_state, new_energy):
             if self._is_already_stored(new_state):
                 return
             new_item = _HeapItem(new_state.copy(), -new_energy)

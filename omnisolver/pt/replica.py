@@ -67,7 +67,7 @@ class Replica:
             if self.should_accept_flip(energy_diff):
                 self.current_energy -= energy_diff
                 self.current_state[i] = -self.current_state[i]
-                self.tracker.store(self.current_state, self.current_energy)
+                self.tracker.digest(self.current_state, self.current_energy)
 
 
 @lru_cache

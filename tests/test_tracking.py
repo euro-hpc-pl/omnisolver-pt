@@ -72,18 +72,18 @@ class TestGroundOnlyTracker:
         best_state, best_energy = states[best_idx], energies[best_idx]
         return states, energies, best_state, best_energy, best_idx
 
-    def test_storing_new_configuration_with_lower_energy_updates_records(self, tracker_cls):
+    def test_digesting_new_configuration_with_lower_energy_updates_records(self, tracker_cls):
         initial_state = np.array([1, -1, -1, 1, 1], dtype=np.int8)
         initial_energy = 2.1
         new_state = np.array([1, 1, -1, 1, -1], dtype=np.int8)
         new_energy = -0.5
         tracker = tracker_cls(initial_state, initial_energy)
 
-        tracker.store(new_state, new_energy)
+        tracker.digest(new_state, new_energy)
 
         assert_records_agree(tracker, [new_state], [new_energy])
 
-    def test_storing_new_configuration_with_higher_energy_leaves_records_untouched(
+    def test_digesting_new_configuration_with_higher_energy_leaves_records_untouched(
         self, tracker_cls
     ):
         initial_state = np.array([1, -1, -1, 1, 1], dtype=np.int8)
@@ -92,18 +92,18 @@ class TestGroundOnlyTracker:
         new_energy = 3.0
         tracker = tracker_cls(initial_state, initial_energy)
 
-        tracker.store(new_state, new_energy)
+        tracker.digest(new_state, new_energy)
 
         assert_records_agree(tracker, [initial_state], [initial_energy])
 
-    def test_only_single_lowest_energy_state_is_recorded_after_successive_stores(
+    def test_only_single_lowest_energy_state_is_recorded_after_successive_digestions(
         self, tracker_cls, input_example
     ):
         states, energies, best_state, best_energy, _ = input_example
         tracker = tracker_cls(states[0], energies[0])
 
         for state, energy in zip(states[1:], energies[1:]):
-            tracker.store(state, energy)
+            tracker.digest(state, energy)
 
         assert_records_agree(tracker, [best_state], [best_energy])
 
@@ -113,7 +113,7 @@ class TestGroundOnlyTracker:
         tracker = tracker_cls(states[0], energies[0])
 
         for state, energy in zip(states[1:], energies[1:]):
-            tracker.store(state, energy)
+            tracker.digest(state, energy)
 
         best_state[0] = -best_state[0]
 
@@ -127,7 +127,7 @@ class TestGroundOnlyTracker:
         @njit
         def _foo(tracker, states, energies):
             for state, energy in zip(states[1:], energies[1:]):
-                tracker.store(state, energy)
+                tracker.digest(state, energy)
 
             states[best_idx][0] = -states[best_idx][0]
 
@@ -140,12 +140,12 @@ class TestGroundOnlyTracker:
     "tracker_factory", [tracker_factory(float32, 5), tracker_factory(float64, 5)]
 )
 class TestLowEnergySpectrumTracker:
-    def test_storing_the_same_record_is_idempotent(self, tracker_factory):
+    def test_digesting_the_same_record_is_idempotent(self, tracker_factory):
         initial_state = np.array([-1, 1, 1], dtype=np.int8)
         initial_energy = 0.5
         tracker = tracker_factory(initial_state, initial_energy)
 
-        tracker.store(initial_state, initial_energy)
+        tracker.digest(initial_state, initial_energy)
 
         assert_records_agree(tracker, [initial_state], [initial_energy])
 
@@ -164,7 +164,7 @@ class TestLowEnergySpectrumTracker:
         tracker = tracker_factory(initial_state, initial_energy)
 
         for state, energy in zip(states, energies):
-            tracker.store(state, energy)
+            tracker.digest(state, energy)
 
         assert_records_agree(
             tracker,
@@ -180,7 +180,7 @@ class TestLowEnergySpectrumTracker:
         new_energy = -3.0
         tracker = tracker_factory(initial_state, initial_energy)
 
-        tracker.store(new_state, new_energy)
+        tracker.digest(new_state, new_energy)
         new_state[0] = -1
 
         assert_records_agree(tracker, [expected_state, initial_state], [new_energy, initial_energy])
@@ -194,7 +194,7 @@ class TestLowEnergySpectrumTracker:
 
         @njit
         def _foo(tracker, state, energy):
-            tracker.store(state, energy)
+            tracker.digest(state, energy)
             state[0] = -state[0]
 
         tracker = tracker_factory(initial_state, initial_energy)
