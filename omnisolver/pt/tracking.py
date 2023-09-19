@@ -12,6 +12,9 @@ Records = Tuple[Sequence[np.ndarray], Sequence[float]]
 
 
 class Tracker(Protocol):
+    def __init__(self, initial_state: np.ndarray, initial_energy: float):  # pragma: no cover
+        raise NotImplementedError()
+
     def records(self) -> Records:  # pragma: no cover
         raise NotImplementedError()
 
@@ -34,7 +37,7 @@ class _GroundOnlyTracker:
     def records(self) -> Records:
         return [self.best_state_so_far], [self.best_energy_so_far]
 
-    def store(self, new_state, new_energy):
+    def store(self, new_state, new_energy) -> None:
         if new_energy < self.best_energy_so_far:
             self.best_energy_so_far = new_energy
             self.best_state_so_far = new_state.copy()
@@ -48,7 +51,7 @@ def _low_energy_spectrum_tracker(energy_dtype):
             self.state = state
             self.energy = energy
 
-        def __lt__(self, other):
+        def __lt__(self, other) -> bool:
             return self.energy < other.energy
 
     @jitclass((("heap", List(numba_type_of_cls(_HeapItem))), ("num_states", int64)))
