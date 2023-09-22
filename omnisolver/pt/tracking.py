@@ -1,3 +1,22 @@
+"""Module providing several tracker implementations.
+
+A tracker is an object used by replica for keeping track of relevant information. For the replica,
+the tracker objects are opaque, meaning that the replica only feeds the newly encountered
+configurations and is not concerned at all about what the tracker does with them. This approach
+one to decouple Replicas and Trackers.
+
+Currently, two forms of tracking are implemented:
+- Tracking only the best encountered configuration.
+- Tracking up to M best encountered configurations, where M is a user supplied parmeter.
+
+At a first glance, the first option may seem like a special case of the second one.
+However, we distinguish it from the second one as it has significantly more performant,
+specialized implementation.
+
+To keep the user away from having to manually construct trackers, this module provides a
+simple function `tracker factory(dtype, num_states)`, which constructs an appropriate
+tracker given the dtype of the model and desired number of states to store.
+"""
 from functools import lru_cache
 from heapq import heappop, heappush
 from typing import Protocol, Sequence, Tuple
@@ -50,6 +69,7 @@ class Tracker(Protocol):
 
 
 class TrackerFactory(Protocol):
+    """Protocol describing a callable construting a new tracker."""
     def __call__(
         self, initial_state: np.ndarray, initial_energy: np.ndarray
     ) -> Tracker:  # pragma: no cover
@@ -57,14 +77,33 @@ class TrackerFactory(Protocol):
 
 
 class _GroundOnlyTracker:
+    """Implementation of a tracker keepingtrak of a single state with lower energy.
+
+    This tracker's `digest` command updates tracker's configuration if and only if
+    it is better than the one previously stored.
+
+    :param initial_staste: the initial_configuration of this tracker.
+    :param initial_energy: the corresponding energy.
+    """
     def __init__(self, initial_state, initial_energy):
         self.best_state_so_far = initial_state.copy()
         self.best_energy_so_far = initial_energy
 
     def records(self) -> Records:
+        """Get best configuration(s) stored by this tracker.
+
+        This implementation conforms to the Tracker protocol, and hence both elements
+        of the returned tuple are lists, despite both of them having always. length 1.
+
+        :returns: A tuple of the form ()[best_state], [best_energy])
+        """
         return [self.best_state_so_far], [self.best_energy_so_far]
 
     def digest(self, new_state, new_energy) -> None:
+        """Process new configuration.
+
+        :param new_state: new state to process.
+        :param new_energy: the corresponding energy."""
         if new_energy < self.best_energy_so_far:
             self.best_energy_so_far = new_energy
             self.best_state_so_far = new_state.copy()
