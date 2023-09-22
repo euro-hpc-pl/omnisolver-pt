@@ -194,7 +194,7 @@ def _ground_only_tracker_cls(energy_dtype):
     )(_GroundOnlyTracker)
 
 
-def tracker_factory(energy_dtype, num_states) -> Tracker:
+def construct_tracker(energy_dtype, num_states) -> Tracker:
     """Construct a tracker factory for a given dtype and number of states.
 
     :param energy_dtype: the data type of energies to be stored by the tracker.
