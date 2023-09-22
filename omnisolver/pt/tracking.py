@@ -70,6 +70,7 @@ class Tracker(Protocol):
 
 class TrackerFactory(Protocol):
     """Protocol describing a callable construting a new tracker."""
+
     def __call__(
         self, initial_state: np.ndarray, initial_energy: np.ndarray
     ) -> Tracker:  # pragma: no cover
@@ -85,6 +86,7 @@ class _GroundOnlyTracker:
     :param initial_staste: the initial_configuration of this tracker.
     :param initial_energy: the corresponding energy.
     """
+
     def __init__(self, initial_state, initial_energy):
         self.best_state_so_far = initial_state.copy()
         self.best_energy_so_far = initial_energy
@@ -103,7 +105,8 @@ class _GroundOnlyTracker:
         """Process new configuration.
 
         :param new_state: new state to process.
-        :param new_energy: the corresponding energy."""
+        :param new_energy: the corresponding energy.
+        """
         if new_energy < self.best_energy_so_far:
             self.best_energy_so_far = new_energy
             self.best_state_so_far = new_state.copy()
@@ -111,28 +114,71 @@ class _GroundOnlyTracker:
 
 @lru_cache
 def _low_energy_spectrum_tracker(energy_dtype):
+    """Function constructing a low energy spectrum tracker class for a given dtype.
+
+    This funcion creates a jit-compiled version of _LowEnergySpectrumTracker
+    class capable of storing up to `num_states` numer of states. This
+    is internally achieved by using a (max) heap data structure.
+
+    :param dtype: data type of energies that will be stored.
+    :return: a jitted _LowEnergySpectrum class conformint to Tracker
+     protocol.
+    """
+
     @jitclass((("state", int8[:]), ("energy", energy_dtype)))
     class _HeapItem:
+        """An item representing pair (state, energy) on a heap.
+
+        :param state: state to be stored.
+        :param energy: the negation of the corresponding energy. The negation is stored
+         because the heap used by the low energy spectrum tracker is a max heap.
+        """
+
         def __init__(self, state, energy):
             self.state = state
             self.energy = energy
 
         def __lt__(self, other) -> bool:
+            """The less than comparison operator."""
             return self.energy < other.energy
 
     @jitclass((("heap", List(numba_type_of_cls(_HeapItem))), ("num_states", int64)))
     class _LowEnergySpectrumTracker:
+        """Tracker storing up to given number of lowest energy states.
+
+        Internally, this tracker uses a max heam of `_HeapItem`s. When the
+        number of stored states exceeds the limit, the top of the heap
+        (i.e. a largest-energy state stored so far) is popped.
+
+        In order to counter the floating point errors, this tracker also makes
+        sure that only ditinct states are stored on the heap.
+
+        :param initial_state: initial state to store by this tracker.
+        :param initial energy: the corresponding energy.
+        :param num_states: maximum number of states this tracker can store.
+        """
+
         def __init__(self, initial_state, initial_energy, num_states):
             self.heap = [_HeapItem(initial_state.copy(), -initial_energy)]
             self.num_states = num_states
 
         def records(self) -> Tuple[Sequence[np.ndarray], Sequence[float]]:
+            """Get best configuration(s) stored by this tracker.
+
+            :return: a synchronized tuple (states, energy), where the sequences have length
+             <= self.num_states.
+            """
             energies = np.array([-item.energy for item in self.heap])
             sorted_indices = np.argsort(energies)
             states = [self.heap[i].state for i in sorted_indices]
             return states, [energies[i] for i in sorted_indices]
 
         def digest(self, new_state, new_energy):
+            """Process new configuration.
+
+            :param new_state: new state to process.
+            :param new_energy: the corresponding energy.
+            """
             if self._is_already_stored(new_state):
                 return
             new_item = _HeapItem(new_state.copy(), -new_energy)
@@ -141,6 +187,12 @@ def _low_energy_spectrum_tracker(energy_dtype):
                 heappop(self.heap)
 
         def _is_already_stored(self, state):
+            """Determine if given state is already stored on the internal heap.
+
+            :param state: state to be checked.
+            :return: true if and only if there is already an item on the heap such that
+             item.state is equal to state, and false otherwise.
+            """
             for item in self.heap:
                 if np.array_equal(state, item.state):
                     return True
@@ -151,6 +203,13 @@ def _low_energy_spectrum_tracker(energy_dtype):
 
 @lru_cache
 def tracker_factory(energy_dtype, num_states) -> TrackerFactory:
+    """Construct a tracker factory for a given dtype and number of states.
+
+    :param energy_dtype: the data type of energies to be stored by the tracker.
+    :param num_states: number of states that should be stored by the tracker.
+    :return: an appropriate tracker factory, either one that constructs the
+     _GroundOnlyTracker or _LowEnergySpectrumTracker.
+    """
     if num_states == 1:
         return jitclass((("best_state_so_far", int8[:]), ("best_energy_so_far", energy_dtype)))(
             _GroundOnlyTracker
