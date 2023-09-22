@@ -40,6 +40,7 @@ class Replica:
         self.current_state = initial_state.copy()
         self.current_energy = model.energy(initial_state)
         self.tracker = tracker
+        self.tracker.digest(self.current_state, self.current_energy)
 
     def should_accept_flip(self, energy_diff: float) -> bool:
         """Determine if this replica should accept spin flip resulting in given energy difference.
@@ -101,7 +102,7 @@ def initialize_replica(model: IsingModel, initial_state, beta, num_states) -> Re
     scalar_dtype = numba.typeof(model.h_vec).dtype
     state_dtype = numba.types.int8[:]
 
-    tracker = tracker_factory(scalar_dtype, num_states)(initial_state, model.energy(initial_state))
+    tracker = tracker_factory(scalar_dtype, num_states)
 
     spec = (
         ("model", numba_type_of_instance(model)),

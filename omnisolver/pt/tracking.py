@@ -22,6 +22,7 @@ from heapq import heappop, heappush
 from typing import Protocol, Sequence, Tuple
 
 import numpy as np
+from numba import optional
 from numba.experimental import jitclass
 from numba.types import List, int8, int64
 
@@ -37,13 +38,7 @@ class Tracker(Protocol):
     Thanks to extracting the state/energies storage to another object,
     we don't need to alter the Replica class to implement different storage
     strategies.
-
-    :param initial_state: initial_state this tracker starts tracking from.
-    :param initial_energy: the corresponding energy.
     """
-
-    def __init__(self, initial_state: np.ndarray, initial_energy: float):  # pragma: no cover
-        raise NotImplementedError()
 
     def records(self) -> Records:  # pragma: no cover
         """Return configurations stored by this tracker as a pair of sequences.
@@ -68,15 +63,6 @@ class Tracker(Protocol):
         raise NotImplementedError()
 
 
-class TrackerFactory(Protocol):
-    """Protocol describing a callable construting a new tracker."""
-
-    def __call__(
-        self, initial_state: np.ndarray, initial_energy: np.ndarray
-    ) -> Tracker:  # pragma: no cover
-        raise NotImplementedError()
-
-
 class _GroundOnlyTracker:
     """Implementation of a tracker keepingtrak of a single state with lower energy.
 
@@ -87,9 +73,9 @@ class _GroundOnlyTracker:
     :param initial_energy: the corresponding energy.
     """
 
-    def __init__(self, initial_state, initial_energy):
-        self.best_state_so_far = initial_state.copy()
-        self.best_energy_so_far = initial_energy
+    def __init__(self):
+        self.best_state_so_far = None
+        self.best_energy_so_far = None
 
     def records(self) -> Records:
         """Get best configuration(s) stored by this tracker.
@@ -107,7 +93,7 @@ class _GroundOnlyTracker:
         :param new_state: new state to process.
         :param new_energy: the corresponding energy.
         """
-        if new_energy < self.best_energy_so_far:
+        if self.best_energy_so_far is None or new_energy < self.best_energy_so_far:
             self.best_energy_so_far = new_energy
             self.best_state_so_far = new_state.copy()
 
@@ -158,8 +144,8 @@ def _low_energy_spectrum_tracker(energy_dtype):
         :param num_states: maximum number of states this tracker can store.
         """
 
-        def __init__(self, initial_state, initial_energy, num_states):
-            self.heap = [_HeapItem(initial_state.copy(), -initial_energy)]
+        def __init__(self, num_states):
+            self.heap = [_HeapItem(np.array([0], np.int8), 0.0) for _ in range(0)]
             self.num_states = num_states
 
         def records(self) -> Tuple[Sequence[np.ndarray], Sequence[float]]:
@@ -202,7 +188,13 @@ def _low_energy_spectrum_tracker(energy_dtype):
 
 
 @lru_cache
-def tracker_factory(energy_dtype, num_states) -> TrackerFactory:
+def _ground_only_tracker_cls(energy_dtype):
+    return jitclass(
+        (("best_state_so_far", optional(int8[:])), ("best_energy_so_far", optional(energy_dtype)))
+    )(_GroundOnlyTracker)
+
+
+def tracker_factory(energy_dtype, num_states) -> Tracker:
     """Construct a tracker factory for a given dtype and number of states.
 
     :param energy_dtype: the data type of energies to be stored by the tracker.
@@ -211,14 +203,6 @@ def tracker_factory(energy_dtype, num_states) -> TrackerFactory:
      _GroundOnlyTracker or _LowEnergySpectrumTracker.
     """
     if num_states == 1:
-        return jitclass((("best_state_so_far", int8[:]), ("best_energy_so_far", energy_dtype)))(
-            _GroundOnlyTracker
-        )
+        return _ground_only_tracker_cls(energy_dtype)()
     else:
-
-        def _tracker_factory(initial_state: np.ndarray, initial_energy: float) -> Tracker:
-            return _low_energy_spectrum_tracker(energy_dtype)(
-                initial_state, initial_energy, num_states
-            )
-
-        return _tracker_factory
+        return _low_energy_spectrum_tracker(energy_dtype)(num_states)
