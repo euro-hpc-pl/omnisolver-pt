@@ -14,7 +14,7 @@ However, we distinguish it from the second one as it has significantly more perf
 specialized implementation.
 
 To keep the user away from having to manually construct trackers, this module provides a
-simple function `tracker factory(dtype, num_states)`, which constructs an appropriate
+simple function `construct_tracker(dtype, num_states)`, which constructs an appropriate
 tracker given the dtype of the model and desired number of states to store.
 """
 from functools import lru_cache
@@ -195,12 +195,12 @@ def _ground_only_tracker_cls(energy_dtype):
 
 
 def construct_tracker(energy_dtype, num_states) -> Tracker:
-    """Construct a tracker factory for a given dtype and number of states.
+    """Construct a tracker for a given dtype and number of states.
 
     :param energy_dtype: the data type of energies to be stored by the tracker.
     :param num_states: number of states that should be stored by the tracker.
-    :return: an appropriate tracker factory, either one that constructs the
-     _GroundOnlyTracker or _LowEnergySpectrumTracker.
+    :return: an appropriate tracker, an instance of (jitted) either _GroundOnlyTracker or
+    _LowEnergySpectrumTracker.
     """
     if num_states == 1:
         return _ground_only_tracker_cls(energy_dtype)()
