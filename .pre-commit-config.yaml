@@ -26,3 +26,10 @@ repos:
     rev: v1.5.1
     hooks:
       - id: mypy
+        args: [
+          --namespace-packages,
+          --explicit-package-bases,
+          --ignore-missing-imports,
+          --install-types,
+          --non-interactive
+        ]
