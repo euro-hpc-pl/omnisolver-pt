@@ -3,7 +3,7 @@ import pytest
 from numba import njit
 from numba.types import float32, float64
 
-from omnisolver.pt.tracking import tracker_factory
+from omnisolver.pt.tracking import construct_tracker
 
 
 def assert_records_agree(tracker, states, energies):
@@ -23,7 +23,7 @@ class TestTrackersInitialization:
         scope="function",
     )
     def tracker(self, request):
-        return tracker_factory(*request.param)
+        return construct_tracker(*request.param)
 
     def test_new_ground_only_tracker_retains_initial_configuration_as_the_best_one(self, tracker):
         initial_state = np.array([1, -1, 1, 1], dtype=np.int8)
@@ -74,7 +74,7 @@ class TestGroundOnlyTracker:
 
     @pytest.fixture(params=[(float32, 1), (float64, 1)], scope="function")
     def tracker(self, request):
-        return tracker_factory(*request.param)
+        return construct_tracker(*request.param)
 
     def test_digesting_new_configuration_with_lower_energy_updates_records(self, tracker):
         initial_state = np.array([1, -1, -1, 1, 1], dtype=np.int8)
@@ -144,7 +144,7 @@ class TestLowEnergySpectrumTracker:
         ]
     )
     def tracker(self, request):
-        return tracker_factory(*request.param)
+        return construct_tracker(*request.param)
 
     def test_digesting_the_same_record_is_idempotent(self, tracker):
         initial_state = np.array([-1, 1, 1], dtype=np.int8)

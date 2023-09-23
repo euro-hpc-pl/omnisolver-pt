@@ -7,7 +7,7 @@ import numpy as np
 
 from ._numba_helpers import numba_type_of_instance
 from .model import IsingModel
-from .tracking import Tracker, tracker_factory
+from .tracking import Tracker, construct_tracker
 
 
 class Replica:
@@ -102,7 +102,7 @@ def initialize_replica(model: IsingModel, initial_state, beta, num_states) -> Re
     scalar_dtype = numba.typeof(model.h_vec).dtype
     state_dtype = numba.types.int8[:]
 
-    tracker = tracker_factory(scalar_dtype, num_states)
+    tracker = construct_tracker(scalar_dtype, num_states)
 
     spec = (
         ("model", numba_type_of_instance(model)),
