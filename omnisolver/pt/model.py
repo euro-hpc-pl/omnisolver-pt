@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Type
 
 import numba
 import numpy as np
@@ -37,7 +38,7 @@ class IsingModel:
 
 
 @lru_cache
-def _create_ising_model(spec):
+def _create_ising_model(spec) -> Type[IsingModel]:
     return numba.experimental.jitclass(spec)(IsingModel)
 
 

@@ -19,7 +19,10 @@ class TestPerformingMonteCarloSweeps:
         initial_state = np.ones(3, dtype=np.int8)
 
         replicas = numba.typed.List(
-            [initialize_replica(model, initial_state, beta) for beta in np.linspace(0.1, 1.0, 10)]
+            [
+                initialize_replica(model, initial_state, beta, 1)
+                for beta in np.linspace(0.1, 1.0, 10)
+            ]
         )
 
         perform_monte_carlo_sweeps(replicas, 1)
@@ -33,8 +36,10 @@ class TestReplicaExchangeCriterion:
     ):
         numba_seed(42)
         model = ising_model(np.ones(3), np.zeros((3, 3)))
-        replica_1 = initialize_replica(model, np.ones(3, dtype=np.int8), beta=0.1)
-        replica_2 = initialize_replica(model, np.array([-1, 1, -1], dtype=np.int8), beta=0.01)
+        replica_1 = initialize_replica(model, np.ones(3, dtype=np.int8), beta=0.1, num_states=1)
+        replica_2 = initialize_replica(
+            model, np.array([-1, 1, -1], dtype=np.int8), beta=0.01, num_states=1
+        )
 
         assert should_exchange_states(replica_1, replica_2)
         assert should_exchange_states(replica_2, replica_1)
@@ -53,8 +58,8 @@ class TestReplicaExchangeCriterion:
         beta_2 = beta_1 - (threshold_beta_difference - 0.1)
         numba_seed(42)
 
-        replica_1 = initialize_replica(model, initial_state_1, beta_1)
-        replica_2 = initialize_replica(model, initial_state_2, beta_2)
+        replica_1 = initialize_replica(model, initial_state_1, beta_1, 1)
+        replica_2 = initialize_replica(model, initial_state_2, beta_2, 1)
 
         assert should_exchange_states(replica_1, replica_2)
 
@@ -71,8 +76,8 @@ class TestReplicaExchangeCriterion:
         beta_2 = beta_1 - (threshold_beta_difference + 0.1)
         numba_seed(42)
 
-        replica_1 = initialize_replica(model, initial_state_1, beta_1)
-        replica_2 = initialize_replica(model, initial_state_2, beta_2)
+        replica_1 = initialize_replica(model, initial_state_1, beta_1, 1)
+        replica_2 = initialize_replica(model, initial_state_2, beta_2, 1)
 
         assert not should_exchange_states(replica_1, replica_2)
 
@@ -86,8 +91,8 @@ class TestReplicaExchange:
         initial_state_2 = np.ones(3, dtype=np.int8)
         energy_1 = model.energy(initial_state_1)
         energy_2 = model.energy(initial_state_2)
-        replica_1 = initialize_replica(model, initial_state_1, beta=0.01)
-        replica_2 = initialize_replica(model, initial_state_1, beta=0.1)
+        replica_1 = initialize_replica(model, initial_state_1, beta=0.01, num_states=1)
+        replica_2 = initialize_replica(model, initial_state_1, beta=0.1, num_states=1)
 
         exchange_states(replica_1, replica_2)
 
@@ -103,8 +108,8 @@ class TestReplicaExchange:
         model = ising_model(h_vec, j_mat)
         initial_state = np.ones(3, dtype=np.int8)
 
-        replica_1 = initialize_replica(model, initial_state, beta=0.01)
-        replica_2 = initialize_replica(model, initial_state, beta=0.1)
+        replica_1 = initialize_replica(model, initial_state, beta=0.01, num_states=1)
+        replica_2 = initialize_replica(model, initial_state, beta=0.1, num_states=1)
 
         exchange_states(replica_1, replica_2)
 

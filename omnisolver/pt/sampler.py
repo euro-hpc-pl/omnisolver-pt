@@ -1,6 +1,4 @@
 """Dimod-compatible PT sampler."""
-from operator import attrgetter
-
 import dimod
 import numba
 import numpy as np
@@ -27,6 +25,7 @@ class PTSampler(dimod.Sampler):
         num_sweeps=100,
         beta_min=0.01,
         beta_max=1.0,
+        num_states=1,
         **parameters,
     ):
         """Solve given Ising problem.
@@ -53,7 +52,7 @@ class PTSampler(dimod.Sampler):
 
         replicas = numba.typed.List(
             [
-                initialize_replica(model, initial_state, beta)
+                initialize_replica(model, initial_state, beta, num_states)
                 for initial_state, beta in zip(initial_states, betas)
             ]
         )
@@ -65,9 +64,19 @@ class PTSampler(dimod.Sampler):
                 if should_exchange_states(replicas[i], replicas[i + 1]):
                     exchange_states(replicas[i], replicas[i + 1])
 
-        best_replica = min(replicas, key=attrgetter("best_energy_so_far"))
+        all_records = [replica.tracker.records() for replica in replicas]
+        recorded_states = sum((r[0] for r in all_records), start=[])
+        recorded_energies = sum((r[1] for r in all_records), start=[])
 
-        return dimod.SampleSet.from_samples_bqm(best_replica.best_state_so_far, bqm)
+        indices = np.argsort(recorded_energies)
+        states_to_return = set()
+
+        for i in indices:
+            states_to_return.add(tuple(recorded_states[i]))
+            if len(states_to_return) == num_states:
+                break
+
+        return dimod.SampleSet.from_samples_bqm(list(states_to_return), bqm)
 
     @property
     def parameters(self):

@@ -25,3 +25,6 @@ sample_args:
     help: "inverse temperature of the coldest replica"
     type: float
     default: 1.0
+  - name: "num_states"
+    help: "number of lowest energy states to keep track of."
+    default: 1
